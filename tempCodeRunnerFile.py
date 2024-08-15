@@ -1,0 +1,2 @@
+
+precio_producto = StringVar()
