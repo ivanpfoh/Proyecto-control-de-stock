@@ -25,6 +25,10 @@ tabla_productos = StringVar()
 
 
 def datos_a_texto(n):
+    """
+    Returns:
+        Retorna el texto SQL ordenado
+    """
     texto = ""
     for i in n:
         texto += "\t".join(map(str, i)) + "\n"
@@ -60,16 +64,16 @@ def guardar():
     
     cursor.execute("INSERT INTO productos VALUES"
     "(NULL ,'{}','{}','{}', {})".format(nombre_producto,marca_producto,precio_producto,cantidad_producto))
-    entrada_nombre.delete()
-    entrada_marca.delete()
-    entrada_precio.delete()
-    entrada_cantidad.delete()
+    entrada_nombre.delete(0, END)
+    entrada_marca.delete(0, END)
+    entrada_precio.delete(0, END)
+    entrada_cantidad.delete(0, END)
     conexion.commit()
     conexion.close()
     
     
     
-#label 1
+#label y Entry 1 
 
 label1 = Label(frame, text="Nombre del producto: ")
 label1.grid(row=1, column=0,  padx=3, pady=3)
@@ -77,7 +81,7 @@ entrada_nombre = Entry(frame, textvariable=nombre_producto)
 entrada_nombre.grid(row=1, column=1)
 
 
-#label 2
+#label y Entry 2
 
 label2 = Label(frame, text="Marca del producto: ")
 label2.grid(row=2, column=0, padx=3, pady=3)
@@ -85,7 +89,7 @@ entrada_marca = Entry(frame, textvariable=marca_producto)
 entrada_marca.grid(row=2, column=1)
 
 
-#label 3
+#label y Entry 3
 
 label3 = Label(frame, text="Precio del producto: ")
 label3.grid(row=3, column=0, padx=3, pady=3)
@@ -93,7 +97,7 @@ entrada_precio = Entry(frame, textvariable=precio_producto)
 entrada_precio.grid(row=3, column=1)
 
 
-#label 4
+#label y Entry 4
 
 label4 = Label(frame, text="Cantidad en Stock del producto: ")
 label4.grid(row=4, column=0,  padx=3, pady=3)
@@ -101,7 +105,7 @@ entrada_cantidad = Entry(frame, textvariable=cantidad_producto)
 entrada_cantidad.grid(row=4, column=1)
 
 
-#Boton para enviar
+#Boton para almacenar los datos
 
 Button(frame, text="Guardar", command=guardar).grid(row=5, column=1) 
 
