@@ -22,6 +22,21 @@ marca_producto = StringVar()
 precio_producto = StringVar()
 cantidad_producto = StringVar()
 tabla_productos = StringVar()
+nombre_producto_ingresado = StringVar()
+
+def buscar_por_nombre():
+    conexion = sqlite3.connect('stock.db')
+    cursor = conexion.cursor()
+    try:
+        nombre_producto_ingresado = nombre_producto_ingresado.get()
+        tabla = cursor.execute("SELECT nombre_producto FROM productos WHERE nombre_producto={}".format(nombre_producto_ingresado)).fetchall()
+        
+        SalidaDeDatos1.config(text=tabla)
+        nombre_producto_ingresado.delete(0, END)
+    except:
+        print("No se encontro el producto.")
+        
+    conexion.close()
 
 
 def datos_a_texto(n):
@@ -104,24 +119,34 @@ label4.grid(row=4, column=0,  padx=3, pady=3)
 entrada_cantidad = Entry(frame, textvariable=cantidad_producto)
 entrada_cantidad.grid(row=4, column=1)
 
+#Otro label para Explicar que valor ingresar
+SalidaDeDatos2 = Label(frame, text="Ingrese el nombre del producto:")
+SalidaDeDatos2.grid(row=5, column=0)
 
 #Boton para almacenar los datos
 
-Button(frame, text="Guardar", command=guardar).grid(row=5, column=1) 
+Button(frame, text="Guardar", command=guardar).grid(row=5, column=1)
 
-#Separador
+#Boton para buscar un datos especifico por nombre
+
+Button(frame, text="Buscar", command=buscar_por_nombre).grid(row=6, column=1, pady=10)
+
+entrada_datos_busqueda1 = Entry(frame, textvariable=nombre_producto_ingresado)
+entrada_datos_busqueda1.grid(row=6, column=0 )
 
 
 #Espacio para ver datos actuales en la base de datos
+SalidaDeDatos1 = Label(frame, text="")
+SalidaDeDatos1.grid(row=7, column=0)
 
-Button(frame, text="Ver los datos actuales", command=resultados).grid(row=7,column=0, pady=10) 
+Button(frame, text="Ver los datos actuales", command=resultados).grid(row=9,column=0, pady=10) 
 
 label5 = Label(frame, text="\tid\tNombre  |marca  |precio  |cantidad", justify=CENTER)
-label5.grid(row=8,column=0)
+label5.grid(row=10,column=0)
 
 
 SalidaDeDatos = Label(frame, text="")
-SalidaDeDatos.grid(row=9)
+SalidaDeDatos.grid(row=11)
 
 
 root.mainloop()
