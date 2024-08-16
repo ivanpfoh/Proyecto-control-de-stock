@@ -1,2 +1,1 @@
-
-precio_producto = StringVar()
+a

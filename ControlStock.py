@@ -7,7 +7,7 @@ from tkinter import *
 root = Tk()
 frame = Frame(root)
 frame.pack(fill="both", expand=1)
-root.geometry("400x400")
+root.geometry("800x800")
 root.resizable(False, True)
 frame.config(bg="lightgrey")
 root.config( relief="sunken", bd=9)
@@ -23,17 +23,41 @@ precio_producto = StringVar()
 cantidad_producto = StringVar()
 tabla_productos = StringVar()
 nombre_producto_ingresado = StringVar()
+nombre_producto_borrar = StringVar()
 
+def borrar_por_nombre():
+    
+    conexion = sqlite3.connect('stock.db')
+    cursor = conexion.cursor()
+    try:
+        nombre_producto_borrar = Entrada_Nombre_borrar.get()
+        cursor.execute("DELETE FROM productos WHERE name_producto='{}'".format(nombre_producto_borrar))
+        Entrada_Nombre_borrar.delete(0, END)
+        
+
+    except:
+        SalidaDeDatos2.config(text="No se encontro el producto O se ingreso un nombre no valido.")
+        Entrada_Nombre_borrar.delete(0, END)
+    conexion.commit()
+    conexion.close()
+    
+    
+    
+    
 def buscar_por_nombre():
     conexion = sqlite3.connect('stock.db')
     cursor = conexion.cursor()
-    
-    nombre_producto_ingresado = entrada_datos_busqueda1.get()
-    resultado = cursor.execute("SELECT * FROM productos WHERE name_producto='{}'".format(nombre_producto_ingresado)).fetchone()
-    SalidaDeDatos1.config(text=resultado)
-    entrada_datos_busqueda1.delete(0, END)
+    try:
+        nombre_producto_ingresado = entrada_datos_busqueda1.get()
+        resultado = cursor.execute("SELECT * FROM productos WHERE name_producto='{}'".format(nombre_producto_ingresado)).fetchone()
+        entrada_datos_busqueda1.delete(0, END)
+        SalidaDeDatos1.config(text=resultado)
+        
 
-    #except: print("No se encontro el producto.")
+    except:
+        SalidaDeDatos1.config(text="No se encontro el producto O se ingreso un nombre no valido.")
+        print("No se encontro el producto O se ingreso un nombre no valido.")
+        entrada_datos_busqueda1.delete(0, END)
     
     conexion.close()
 
@@ -144,10 +168,14 @@ SalidaDeDatos1.grid(row=8, column=0)
 #Boton para eliminar datos especificos de la DB
 
 
+Button(frame, text="Borrar", command=borrar_por_nombre).grid(row=9, column=1, pady=10)
 
 
+Entrada_Nombre_borrar = Entry(frame, textvariable=nombre_producto_borrar)
+Entrada_Nombre_borrar.grid(row=9, column=0)
 
-
+SalidaDeDatos2 = Label(frame, text="")
+SalidaDeDatos2.grid(row=10, column=0)
 
 
 
