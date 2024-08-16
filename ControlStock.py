@@ -27,15 +27,14 @@ nombre_producto_ingresado = StringVar()
 def buscar_por_nombre():
     conexion = sqlite3.connect('stock.db')
     cursor = conexion.cursor()
-    try:
-        nombre_producto_ingresado = nombre_producto_ingresado.get()
-        tabla = cursor.execute("SELECT nombre_producto FROM productos WHERE nombre_producto={}".format(nombre_producto_ingresado)).fetchall()
-        
-        SalidaDeDatos1.config(text=tabla)
-        nombre_producto_ingresado.delete(0, END)
-    except:
-        print("No se encontro el producto.")
-        
+    
+    nombre_producto_ingresado = entrada_datos_busqueda1.get()
+    resultado = cursor.execute("SELECT * FROM productos WHERE name_producto='{}'".format(nombre_producto_ingresado)).fetchone()
+    SalidaDeDatos1.config(text=resultado)
+    entrada_datos_busqueda1.delete(0, END)
+
+    #except: print("No se encontro el producto.")
+    
     conexion.close()
 
 
@@ -135,16 +134,18 @@ entrada_datos_busqueda1 = Entry(frame, textvariable=nombre_producto_ingresado)
 entrada_datos_busqueda1.grid(row=6, column=0 )
 
 
-#Espacio para ver datos actuales en la base de datos
+
 SalidaDeDatos1 = Label(frame, text="")
 SalidaDeDatos1.grid(row=7, column=0)
 
+#Boton para ver datos actuales en la base de datos
 Button(frame, text="Ver los datos actuales", command=resultados).grid(row=9,column=0, pady=10) 
 
+#Breve explicacion de cada columna
 label5 = Label(frame, text="\tid\tNombre  |marca  |precio  |cantidad", justify=CENTER)
 label5.grid(row=10,column=0)
 
-
+#Respuesta de datos en la DB
 SalidaDeDatos = Label(frame, text="")
 SalidaDeDatos.grid(row=11)
 
