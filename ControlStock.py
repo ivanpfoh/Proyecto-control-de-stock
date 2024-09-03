@@ -31,7 +31,7 @@ def borrar_por_nombre():
     cursor = conexion.cursor()
     try:
         nombre_producto_borrar = Entrada_Nombre_borrar.get()
-        cursor.execute("DELETE FROM productos WHERE name_producto='{}'".format(nombre_producto_borrar))
+        cursor.execute("DELETE FROM productos WHERE name_producto=?",(nombre_producto_borrar,))
         Entrada_Nombre_borrar.delete(0, END)
         
 
@@ -49,7 +49,8 @@ def buscar_por_nombre():
     cursor = conexion.cursor()
     try:
         nombre_producto_ingresado = entrada_datos_busqueda1.get()
-        resultado = cursor.execute("SELECT * FROM productos WHERE name_producto='{}'".format(nombre_producto_ingresado)).fetchone()
+        cursor.execute("SELECT * FROM productos WHERE name_producto=?",(nombre_producto_ingresado,))
+        resultado = cursor.fetchone()
         entrada_datos_busqueda1.delete(0, END)
         SalidaDeDatos1.config(text=resultado)
         
@@ -100,8 +101,9 @@ def guardar():
     precio_producto = entrada_precio.get()
     cantidad_producto = entrada_cantidad.get()
     
-    cursor.execute("INSERT INTO productos VALUES"
-    "(NULL ,'{}','{}','{}', {})".format(nombre_producto,marca_producto,precio_producto,cantidad_producto))
+    cursor.execute("INSERT INTO productos (nombre_producto, marca_producto, precio_producto, cantidad_producto) VALUES (?, ?, ?, ?)",
+    (nombre_producto, marca_producto, precio_producto, cantidad_producto))
+    
     entrada_nombre.delete(0, END)
     entrada_marca.delete(0, END)
     entrada_precio.delete(0, END)
