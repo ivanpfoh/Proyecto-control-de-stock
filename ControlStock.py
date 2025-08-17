@@ -1,196 +1,195 @@
 import sqlite3
 from tkinter import *
+from tkinter import ttk, messagebox
 
 
+# FUNCIONES DE BASE DE DATOS
 
-#Configuracion de la ventana
-root = Tk()
-frame = Frame(root)
-frame.pack(fill="both", expand=1)
-root.geometry("800x800")
-root.resizable(False, True)
-frame.config(bg="lightgrey")
-root.config( relief="sunken", bd=9)
+def crear_tabla():
+    with sqlite3.connect('stock.db') as conexion:
+        cursor = conexion.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS productos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre_producto TEXT NOT NULL,
+                marca_producto TEXT NOT NULL,
+                precio_producto REAL NOT NULL,
+                cantidad_producto INTEGER NOT NULL
+            )
+        ''')
+        conexion.commit()
 
-#Label 0 , Titulo
-label = Label(frame, text="Control de Stock", font=("Verdana", 15))
-label.grid(row=0, column=0, padx=10, pady=10)
-
-#Variables para ejecutar las tareas de guardado 
-nombre_producto = StringVar()
-marca_producto = StringVar()
-precio_producto = StringVar()
-cantidad_producto = StringVar()
-tabla_productos = StringVar()
-nombre_producto_ingresado = StringVar()
-nombre_producto_borrar = StringVar()
-
-def borrar_por_nombre():
-    
-    conexion = sqlite3.connect('stock.db')
-    cursor = conexion.cursor()
+def agregar_producto(nombre, marca, precio, cantidad):
     try:
-        nombre_producto_borrar = Entrada_Nombre_borrar.get()
-        cursor.execute("DELETE FROM productos WHERE name_producto=?",(nombre_producto_borrar,))
-        Entrada_Nombre_borrar.delete(0, END)
-        
+        with sqlite3.connect('stock.db') as conexion:
+            cursor = conexion.cursor()
+            cursor.execute(
+                "INSERT INTO productos (nombre_producto, marca_producto, precio_producto, cantidad_producto) VALUES (?, ?, ?, ?)",
+                (nombre, marca, precio, cantidad)
+            )
+            conexion.commit()
+        return True
+    except sqlite3.Error as e:
+        print("Error al agregar producto:", e)
+        return False
 
-    except:
-        SalidaDeDatos2.config(text="No se encontro el producto O se ingreso un nombre no valido.")
-        Entrada_Nombre_borrar.delete(0, END)
-    conexion.commit()
-    conexion.close()
-    
-    
-    
-    
-def buscar_por_nombre():
-    conexion = sqlite3.connect('stock.db')
-    cursor = conexion.cursor()
+def borrar_producto(nombre):
+    with sqlite3.connect('stock.db') as conexion:
+        cursor = conexion.cursor()
+        cursor.execute("DELETE FROM productos WHERE nombre_producto=?", (nombre,))
+        conexion.commit()
+        return cursor.rowcount  # devuelve la cantidad de filas eliminadas
+
+def buscar_producto(nombre):
+    with sqlite3.connect('stock.db') as conexion:
+        cursor = conexion.cursor()
+        cursor.execute("SELECT * FROM productos WHERE nombre_producto=?", (nombre,))
+        return cursor.fetchone()
+
+def obtener_todos_productos():
+    with sqlite3.connect('stock.db') as conexion:
+        cursor = conexion.cursor()
+        cursor.execute("SELECT * FROM productos")
+        return cursor.fetchall()
+
+# =========================
+# FUNCIONES DE LA INTERFAZ
+# =========================
+def validar_y_guardar():
+    nombre = entrada_nombre.get().strip()
+    marca = entrada_marca.get().strip()
     try:
-        nombre_producto_ingresado = entrada_datos_busqueda1.get()
-        cursor.execute("SELECT * FROM productos WHERE name_producto=?",(nombre_producto_ingresado,))
-        resultado = cursor.fetchone()
-        entrada_datos_busqueda1.delete(0, END)
-        SalidaDeDatos1.config(text=resultado)
-        
+        precio = float(entrada_precio.get())
+        cantidad = int(entrada_cantidad.get())
+    except ValueError:
+        messagebox.showerror("Error", "Precio o cantidad no válidos")
+        return
 
-    except:
-        SalidaDeDatos1.config(text="No se encontro el producto O se ingreso un nombre no valido.")
-        print("No se encontro el producto O se ingreso un nombre no valido.")
-        entrada_datos_busqueda1.delete(0, END)
-    
-    conexion.close()
+    if not nombre or not marca:
+        messagebox.showerror("Error", "Nombre y marca no pueden estar vacíos")
+        return
 
+    if agregar_producto(nombre, marca, precio, cantidad):
+        messagebox.showinfo("Éxito", "Producto agregado correctamente")
+        limpiar_entradas()
+        mostrar_productos()
+    else:
+        messagebox.showerror("Error", "No se pudo agregar el producto")
 
-def datos_a_texto(n):
-    """
-    Returns:
-        Retorna el texto SQL ordenado
-    """
-    texto = ""
-    for i in n:
-        texto += "\t".join(map(str, i)) + "\n"
-    return texto
-
-
-def resultados():
-    """
-        Ejecuta la consulta de los valores actuales en los registros de la base de datos
-    """
-    conexion = sqlite3.connect('stock.db')
-    cursor = conexion.cursor()
-    
-    tabla_productos = ""
-    tabla = cursor.execute("SELECT * FROM productos").fetchall()
-    tabla_productos = datos_a_texto(tabla)
-    SalidaDeDatos.config(text=tabla_productos)
-    conexion.close()
-
-    
-
-    
-def guardar():
-    """
-        Almacena los valores ingresados por el usuario en la base de datos
-    """
-    conexion = sqlite3.connect('stock.db')
-    cursor = conexion.cursor()
-    nombre_producto = entrada_nombre.get()
-    marca_producto = entrada_marca.get()
-    precio_producto = entrada_precio.get()
-    cantidad_producto = entrada_cantidad.get()
-    
-    cursor.execute("INSERT INTO productos (nombre_producto, marca_producto, precio_producto, cantidad_producto) VALUES (?, ?, ?, ?)",
-    (nombre_producto, marca_producto, precio_producto, cantidad_producto))
-    
+def limpiar_entradas():
     entrada_nombre.delete(0, END)
     entrada_marca.delete(0, END)
     entrada_precio.delete(0, END)
     entrada_cantidad.delete(0, END)
-    conexion.commit()
-    conexion.close()
-    
-    
-    
-#label y Entry 1 
 
-label1 = Label(frame, text="Nombre del producto: ")
-label1.grid(row=1, column=0,  padx=3, pady=3)
-entrada_nombre = Entry(frame, textvariable=nombre_producto)
-entrada_nombre.grid(row=1, column=1)
+def eliminar_producto():
+    nombre = entrada_borrar.get().strip()
+    if not nombre:
+        messagebox.showwarning("Aviso", "Ingrese el nombre del producto a eliminar")
+        return
+    cantidad_eliminada = borrar_producto(nombre)
+    if cantidad_eliminada:
+        messagebox.showinfo("Éxito", f"Producto '{nombre}' eliminado")
+        entrada_borrar.delete(0, END)
+        mostrar_productos()
+    else:
+        messagebox.showerror("Error", f"No se encontró el producto '{nombre}'")
 
+def buscar_y_mostrar():
+    nombre = entrada_buscar.get().strip()
+    if not nombre:
+        messagebox.showwarning("Aviso", "Ingrese el nombre del producto a buscar")
+        return
+    resultado = buscar_producto(nombre)
+    if resultado:
+        treeview.selection_remove(treeview.selection())
+        treeview.delete(*treeview.get_children())
+        treeview.insert("", END, values=resultado)
+    else:
+        messagebox.showinfo("Resultado", "No se encontró el producto")
+    entrada_buscar.delete(0, END)
 
-#label y Entry 2
-
-label2 = Label(frame, text="Marca del producto: ")
-label2.grid(row=2, column=0, padx=3, pady=3)
-entrada_marca = Entry(frame, textvariable=marca_producto)
-entrada_marca.grid(row=2, column=1)
-
-
-#label y Entry 3
-
-label3 = Label(frame, text="Precio del producto: ")
-label3.grid(row=3, column=0, padx=3, pady=3)
-entrada_precio = Entry(frame, textvariable=precio_producto)
-entrada_precio.grid(row=3, column=1)
-
-
-#label y Entry 4
-
-label4 = Label(frame, text="Cantidad en Stock del producto: ")
-label4.grid(row=4, column=0,  padx=3, pady=3)
-entrada_cantidad = Entry(frame, textvariable=cantidad_producto)
-entrada_cantidad.grid(row=4, column=1)
-
-#Boton para almacenar los datos
-
-Button(frame, text="Guardar", command=guardar).grid(row=5, column=1)
-
-#Otro label para Explicar que valor ingresar
-SalidaDeDatos2 = Label(frame, text="Ingrese el nombre del producto:")
-SalidaDeDatos2.grid(row=6, column=0)
+def mostrar_productos():
+    treeview.delete(*treeview.get_children())
+    for producto in obtener_todos_productos():
+        treeview.insert("", END, values=producto)
 
 
+# CONFIGURACION DE LA VENTANA
 
-#Boton para buscar un datos especifico por nombre
+root = Tk()
+root.title("Control de Stock")
+root.geometry("850x600")
+root.resizable(False, False)
+root.config(bg="#f0f0f0")
 
-Button(frame, text="Buscar", command=buscar_por_nombre).grid(row=7, column=1, pady=10)
+# Titulo
+Label(root, text="Control de Stock", font=("Verdana", 18, "bold"), bg="#f0f0f0").pack(pady=10)
 
-entrada_datos_busqueda1 = Entry(frame, textvariable=nombre_producto_ingresado)
-entrada_datos_busqueda1.grid(row=7, column=0 )
+# Frame para entradas
+frame_entradas = Frame(root, bg="#d9d9d9", bd=2, relief="groove")
+frame_entradas.pack(pady=10, padx=10, fill="x")
 
+# Entradas para agregar producto
+Label(frame_entradas, text="Nombre:", bg="#d9d9d9").grid(row=0, column=0, padx=5, pady=5, sticky=W)
+entrada_nombre = Entry(frame_entradas, width=20)
+entrada_nombre.grid(row=0, column=1, padx=5, pady=5)
 
+Label(frame_entradas, text="Marca:", bg="#d9d9d9").grid(row=0, column=2, padx=5, pady=5, sticky=W)
+entrada_marca = Entry(frame_entradas, width=20)
+entrada_marca.grid(row=0, column=3, padx=5, pady=5)
 
-SalidaDeDatos1 = Label(frame, text="")
-SalidaDeDatos1.grid(row=8, column=0)
+Label(frame_entradas, text="Precio:", bg="#d9d9d9").grid(row=1, column=0, padx=5, pady=5, sticky=W)
+entrada_precio = Entry(frame_entradas, width=20)
+entrada_precio.grid(row=1, column=1, padx=5, pady=5)
 
+Label(frame_entradas, text="Cantidad:", bg="#d9d9d9").grid(row=1, column=2, padx=5, pady=5, sticky=W)
+entrada_cantidad = Entry(frame_entradas, width=20)
+entrada_cantidad.grid(row=1, column=3, padx=5, pady=5)
 
-#Boton para eliminar datos especificos de la DB
+Button(frame_entradas, text="Agregar Producto", command=validar_y_guardar, bg="#4caf50", fg="white").grid(row=2, column=0, columnspan=4, pady=10)
 
+# Frame para buscar y borrar
+frame_buscar_borrar = Frame(root, bg="#d9d9d9", bd=2, relief="groove")
+frame_buscar_borrar.pack(pady=10, padx=10, fill="x")
 
-Button(frame, text="Borrar", command=borrar_por_nombre).grid(row=9, column=1, pady=10)
+# Buscar
+Label(frame_buscar_borrar, text="Buscar producto por nombre:", bg="#d9d9d9").grid(row=0, column=0, padx=5, pady=5, sticky=W)
+entrada_buscar = Entry(frame_buscar_borrar, width=30)
+entrada_buscar.grid(row=0, column=1, padx=5, pady=5)
+Button(frame_buscar_borrar, text="Buscar", command=buscar_y_mostrar, bg="#2196f3", fg="white").grid(row=0, column=2, padx=5, pady=5)
 
+# Borrar
+Label(frame_buscar_borrar, text="Eliminar producto por nombre:", bg="#d9d9d9").grid(row=1, column=0, padx=5, pady=5, sticky=W)
+entrada_borrar = Entry(frame_buscar_borrar, width=30)
+entrada_borrar.grid(row=1, column=1, padx=5, pady=5)
+Button(frame_buscar_borrar, text="Eliminar", command=eliminar_producto, bg="#f44336", fg="white").grid(row=1, column=2, padx=5, pady=5)
 
-Entrada_Nombre_borrar = Entry(frame, textvariable=nombre_producto_borrar)
-Entrada_Nombre_borrar.grid(row=9, column=0)
+# Frame para tabla de productos
+frame_tabla = Frame(root)
+frame_tabla.pack(pady=10, padx=10, fill="both", expand=True)
 
-SalidaDeDatos2 = Label(frame, text="")
-SalidaDeDatos2.grid(row=10, column=0)
+# Scrollbar
+scrollbar = Scrollbar(frame_tabla)
+scrollbar.pack(side=RIGHT, fill=Y)
 
+# Treeview para mostrar productos
+treeview = ttk.Treeview(frame_tabla, columns=("ID","Nombre","Marca","Precio","Cantidad"), show="headings", yscrollcommand=scrollbar.set)
+treeview.heading("ID", text="ID")
+treeview.heading("Nombre", text="Nombre")
+treeview.heading("Marca", text="Marca")
+treeview.heading("Precio", text="Precio")
+treeview.heading("Cantidad", text="Cantidad")
+treeview.column("ID", width=50, anchor=CENTER)
+treeview.column("Nombre", width=150)
+treeview.column("Marca", width=150)
+treeview.column("Precio", width=100, anchor=CENTER)
+treeview.column("Cantidad", width=100, anchor=CENTER)
+treeview.pack(fill="both", expand=True)
+scrollbar.config(command=treeview.yview)
 
-
-#Boton para ver datos actuales en la base de datos
-Button(frame, text="Ver los datos actuales", command=resultados).grid(row=13,column=0, pady=10) 
-
-#Breve explicacion de cada columna
-label5 = Label(frame, text="\tid\tNombre  |marca  |precio  |cantidad", justify=CENTER)
-label5.grid(row=14,column=0)
-
-#Respuesta de datos en la DB
-SalidaDeDatos = Label(frame, text="")
-SalidaDeDatos.grid(row=15)
-
+# Crear tabla y mostrar productos iniciales
+crear_tabla()
+mostrar_productos()
 
 root.mainloop()
